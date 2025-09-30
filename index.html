@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS2 BIN to MIDI Converter</title>
+<script src="https://cdn.jsdelivr.net/npm/@tonejs/midi/dist/Midi.js"></script>
+</head>
+<body>
+<h1>PS2 BIN → MIDI Converter</h1>
+<input type="file" id="binFile" accept=".bin">
+<button id="convertBtn">Convert to MIDI</button>
+<a id="downloadLink" style="display:none">Download MIDI</a>
+<pre id="log"></pre>
+
+<script>
+const log = document.getElementById('log');
+
+function logMsg(msg) {
+  log.textContent += msg + "\n";
+}
+
+// Placeholder: Extract PSQ sequences from BIN (highly simplified)
+function extractPSQ(binArrayBuffer) {
+  // This is a simplified example: real PSQ extraction requires parsing PS2 audio format
+  logMsg("Reading BIN file size: " + binArrayBuffer.byteLength + " bytes");
+  // For demo, we simulate a PSQ track
+  return [
+    {note: 60, start: 0, duration: 500}, // C4
+    {note: 64, start: 500, duration: 500}, // E4
+    {note: 67, start: 1000, duration: 500} // G4
+  ];
+}
+
+// Convert extracted PSQ data to MIDI
+function convertToMidi(tracks) {
+  const midi = new Midi();
+  const track = midi.addTrack();
+  tracks.forEach(t => {
+    track.addNote({ midi: t.note, time: t.start/1000, duration: t.duration/1000 });
+  });
+  return midi.toArray(); // returns Uint8Array
+}
+
+document.getElementById('convertBtn').addEventListener('click', () => {
+  const fileInput = document.getElementById('binFile');
+  if (!fileInput.files.length) {
+    alert("Please select a .bin file");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const arrayBuffer = e.target.result;
+    logMsg("File loaded: " + file.name);
+    const psqTracks = extractPSQ(arrayBuffer);
+    const midiData = convertToMidi(psqTracks);
+
+    // Create download link
+    const blob = new Blob([midiData], {type: "audio/midi"});
+    const url = URL.createObjectURL(blob);
+    const dlLink = document.getElementById('downloadLink');
+    dlLink.href = url;
+    dlLink.download = file.name.replace(/\.bin$/i, ".mid");
+    dlLink.style.display = 'inline';
+    dlLink.textContent = "Download MIDI";
+    logMsg("Conversion complete!");
+  };
+  reader.readAsArrayBuffer(file);
+});
+</script>
+</body>
+</html>
